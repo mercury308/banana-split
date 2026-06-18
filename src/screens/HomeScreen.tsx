@@ -51,7 +51,7 @@ export const HomeScreen = ({ navigation }: HomeScreenProps) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.card}>
-        <Text style={styles.title}>Split the bill</Text>
+        <Text style={styles.title}>Split It Up!</Text>
 
         <InputField
           label="Bill total"
@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FFFAA0',
     padding: 20,
   },
   card: {
@@ -105,16 +105,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 20,
-    color: '#111827',
+    color: '#080707',
   },
   button: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#ffc0cb',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#000000',
     fontSize: 16,
     fontWeight: '700',
   },

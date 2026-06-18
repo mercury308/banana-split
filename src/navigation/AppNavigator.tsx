@@ -19,7 +19,7 @@ export const AppNavigator = () => {
         <Stack.Screen
           name="Home"
           component={HomeScreen}
-          options={{ title: 'Split Bill' }}
+          options={{ title: 'Banana Split 🍌' }}
         />
         <Stack.Screen
           name="Results"
