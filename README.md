@@ -2,7 +2,7 @@
 
 Banana Split is a mobile bill-splitting app built with Expo and React Native. It helps friends split totals, calculate tips, and optionally scan receipts to review line items.
 
-## ✨ What it does
+## What it does
 
 - Calculate how much each person owes
 - Support custom tip percentages
@@ -10,7 +10,7 @@ Banana Split is a mobile bill-splitting app built with Expo and React Native. It
 - Scan receipts with OCR to preview itemized entries
 - Review extracted items before continuing
 
-## 🧰 Tech stack
+## Tech stack
 
 - React Native + Expo
 - React Navigation
@@ -40,14 +40,14 @@ Banana Split is a mobile bill-splitting app built with Expo and React Native. It
 
 3. Use Expo Go (or your simulator/emulator) to run the app on iOS, Android, or web.
 
-## ▶️ Available scripts
+## Available scripts
 
 - `npm start` — start the Expo development server
 - `npm run android` — launch on Android
 - `npm run ios` — launch on iOS
 - `npm run web` — launch in the browser
 
-## 📷 Receipt scanning notes
+## Receipt scanning notes
 
 Receipt scanning relies on device permissions for camera and photo access. The app attempts to extract item lines from OCR results and route them to the claim board for review.
 
