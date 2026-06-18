@@ -18,7 +18,7 @@ Banana Split is a mobile bill-splitting app built with Expo and React Native. It
 - ML Kit text recognition for receipt scanning
 - TypeScript
 
-## 📁 Project structure
+## Project structure
 
 - `App.tsx` — app entry point
 - `src/navigation/` — screen navigation setup
@@ -26,7 +26,7 @@ Banana Split is a mobile bill-splitting app built with Expo and React Native. It
 - `src/components/` — reusable UI components
 - `src/utils/` — split calculation and receipt parsing helpers
 
-## 🚀 Getting started
+## Getting started
 
 1. Install dependencies:
    ```bash
