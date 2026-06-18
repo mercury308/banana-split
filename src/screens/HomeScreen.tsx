@@ -80,6 +80,13 @@ export const HomeScreen = ({ navigation }: HomeScreenProps) => {
         <TouchableOpacity style={styles.button} onPress={handleCalculate}>
           <Text style={styles.buttonText}>Calculate</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.button, styles.secondaryButton]}
+          onPress={() => navigation.navigate('CameraScan')}
+        >
+          <Text style={styles.buttonText}>Scan Receipt</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -112,6 +119,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
+    marginTop: 12,
+  },
+  secondaryButton: {
+    backgroundColor: '#7e3f12',
   },
   buttonText: {
     color: '#000000',
