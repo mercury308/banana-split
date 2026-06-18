@@ -6,7 +6,7 @@ interface InputFieldProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
-  keyboardType?: 'numeric' | 'default';
+  keyboardType?: 'numeric' | 'decimal-pad' | 'number-pad' | 'default';
 }
 
 export const InputField = ({
@@ -25,6 +25,8 @@ export const InputField = ({
         onChangeText={onChangeText}
         placeholder={placeholder}
         keyboardType={keyboardType}
+        autoCapitalize="none"
+        autoCorrect={false}
         placeholderTextColor="#9CA3AF"
       />
     </View>

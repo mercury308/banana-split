@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,10 +20,29 @@ export const HomeScreen = ({ navigation }: HomeScreenProps) => {
   const [people, setPeople] = useState('2');
 
   const handleCalculate = () => {
+    const parsedBill = Number(billTotal);
+    const parsedTip = Number(tipPercentage);
+    const parsedPeople = Number(people);
+
+    if (!Number.isFinite(parsedBill) || parsedBill <= 0) {
+      Alert.alert('Invalid bill total', 'Please enter a bill amount greater than 0.');
+      return;
+    }
+
+    if (!Number.isFinite(parsedTip) || parsedTip < 0) {
+      Alert.alert('Invalid tip', 'Please enter a tip percentage of 0 or more.');
+      return;
+    }
+
+    if (!Number.isFinite(parsedPeople) || parsedPeople < 1) {
+      Alert.alert('Invalid people count', 'Please enter at least 1 person.');
+      return;
+    }
+
     const result = calculateSplit({
-      billTotal: Number(billTotal) || 0,
-      tipPercentage: Number(tipPercentage) || 0,
-      people: Number(people) || 1,
+      billTotal: parsedBill,
+      tipPercentage: parsedTip,
+      people: parsedPeople,
     });
 
     navigation.navigate('Results', { result });
