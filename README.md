@@ -1,6 +1,6 @@
-# Kovo
+# Banana Split
 
-Kovo is a mobile bill-splitting app built with Expo and React Native. It helps friends split totals, calculate tips, and optionally scan receipts to review line items.
+Banana Split is a mobile bill-splitting app built with Expo and React Native. It helps friends split totals, calculate tips, and optionally scan receipts to review line items.
 
 ## ✨ What it does
 
