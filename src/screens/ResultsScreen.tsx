@@ -44,7 +44,7 @@ export const ResultsScreen = ({ route }: ResultsScreenProps) => {
         </Text>
 
         <TouchableOpacity style={styles.button} onPress={handleShare}>
-          <Text style={styles.buttonText}>Share result</Text>
+          <Text style={styles.buttonText}>Share 🔗</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FFFAA0',
     padding: 20,
   },
   card: {
@@ -90,13 +90,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   button: {
-    backgroundColor: '#16A34A',
+    backgroundColor: '#ffc0cb',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   buttonText: {
-    color: '#FFFFFF',
+    color: '#0f0505',
     fontSize: 16,
     fontWeight: '700',
   },
