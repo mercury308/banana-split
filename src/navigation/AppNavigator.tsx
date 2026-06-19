@@ -14,6 +14,12 @@ export interface ReceiptItem {
   selectedBy: string[];
 }
 
+export interface ReceiptSummary {
+  subtotal: number | null;
+  tax: number | null;
+  total: number | null;
+}
+
 export type RootStackParamList = {
   Home: undefined;
   Results: { result: SplitResult };
@@ -21,6 +27,7 @@ export type RootStackParamList = {
   ItemClaimBoard: {
     items: ReceiptItem[];
     peopleCount: number;
+    receiptSummary?: ReceiptSummary;
   };
 };
 

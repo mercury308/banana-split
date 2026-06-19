@@ -19,7 +19,7 @@ export const ItemClaimBoardScreen = ({
   route,
   navigation,
 }: ItemClaimBoardScreenProps) => {
-  const { items, peopleCount } = route.params;
+  const { items, peopleCount, receiptSummary } = route.params;
   const [selectedItems, setSelectedItems] = useState(items);
 
   const people = useMemo(
@@ -109,6 +109,31 @@ export const ItemClaimBoardScreen = ({
           </View>
         ))}
       </View>
+
+      {receiptSummary ? (
+        <View style={styles.receiptSummaryCard}>
+          <Text style={styles.receiptSummaryTitle}>Detected Receipt Values</Text>
+          {receiptSummary.subtotal !== null ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Subtotal</Text>
+              <Text style={styles.summaryValue}>${receiptSummary.subtotal.toFixed(2)}</Text>
+            </View>
+          ) : null}
+          {receiptSummary.tax !== null ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Tax</Text>
+              <Text style={styles.summaryValue}>${receiptSummary.tax.toFixed(2)}</Text>
+            </View>
+          ) : null}
+          {receiptSummary.total !== null ? (
+            <View style={styles.summaryRow}>
+              <Text style={styles.summaryLabel}>Total</Text>
+              <Text style={styles.summaryValue}>${receiptSummary.total.toFixed(2)}</Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+
       <FlatList
         data={selectedItems}
         keyExtractor={(item) => item.id}
@@ -182,6 +207,20 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
+  },
+  receiptSummaryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  receiptSummaryTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
   },
   summaryRow: {
     flexDirection: 'row',
