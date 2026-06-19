@@ -6,7 +6,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.anonymous.bananasplit",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "predictiveBackGestureEnabled": false,
@@ -15,9 +19,12 @@
     "web": {},
     "plugins": [
       [
-        "expo-mlkit-ocr",
+        "rn-mlkit-ocr",
         {
-          "iosEngine": "auto"
+          "ocrModels": [
+            "latin"
+          ],
+          "ocrUseBundled": true
         }
       ],
       [
@@ -29,6 +36,11 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6eff2c33-427f-4771-adcf-a1ee441eb153"
+      }
+    }
   }
 }
