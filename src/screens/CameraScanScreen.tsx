@@ -122,7 +122,18 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
   };
 
   const handleClearImage = () => {
-    setImageUri(null);
+    Alert.alert(
+      'Remove image?',
+      'This will clear the current receipt preview.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => setImageUri(null),
+        },
+      ]
+    );
   };
 
   return (
