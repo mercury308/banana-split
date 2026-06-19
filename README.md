@@ -1,4 +1,4 @@
-# Banana Split
+# Banana Split 🍌
 
 Banana Split is an Expo + React Native bill-splitting app for quick group totals and receipt-based item claiming. You can either enter a bill manually, or scan/import a receipt, extract line items with OCR, let each person claim what they ordered, and then review the split.
 
