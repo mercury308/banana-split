@@ -13,7 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { recognizeText } from 'expo-mlkit-ocr';
+import { isSupported, recognizeText } from 'expo-mlkit-ocr';
 import { ReceiptItem, RootStackParamList } from '../navigation/AppNavigator';
 import { InputField } from '../components/InputField';
 import { parseReceiptLines } from '../utils/receiptParser';
@@ -45,6 +45,14 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
         [{ resize: { width: 900 } }],
         { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
       );
+
+      if (!isSupported()) {
+        Alert.alert(
+          'OCR not supported',
+          'This device or build does not support text recognition. Please use a development build or a supported device.'
+        );
+        return;
+      }
 
       const result = await recognizeText(normalizedImage.uri);
       const rawLines = result.blocks
@@ -84,9 +92,19 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
       });
     } catch (error) {
       console.log('Receipt OCR error:', error);
+
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const needsNativeBuild =
+        errorMessage.includes('Cannot find native module') ||
+        errorMessage.includes('ExpoMlkitOcr') ||
+        errorMessage.includes('native build');
+
       Alert.alert(
-        'Scan failed',
-        'Receipt scanning needs a native build to work correctly. If you are using Expo Go, please rebuild the app and try again.'
+        needsNativeBuild ? 'Native OCR setup required' : 'Scan failed',
+        needsNativeBuild
+          ? 'Receipt scanning requires a native build. Please run the app from a development build (not Expo Go) and rebuild after running expo prebuild.'
+          : 'We could not read this receipt right now. Please try another image or check the scan settings.'
       );
     } finally {
       setIsLoading(false);
