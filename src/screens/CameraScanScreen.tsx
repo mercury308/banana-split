@@ -4,6 +4,7 @@ import {
   Alert,
   Image,
   Keyboard,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -13,15 +14,17 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { recognizeText } from 'expo-mlkit-ocr';
-import { ReceiptItem, RootStackParamList } from '../navigation/AppNavigator';
+import { isOcrSupported, recognizeTextLines } from '../utils/ocr';
+import { ReceiptItem, ReceiptSummary, RootStackParamList } from '../navigation/AppNavigator';
 import { InputField } from '../components/InputField';
-import { parseReceiptLines } from '../utils/receiptParser';
+import { parseReceiptDetails } from '../utils/receiptParser';
 
 export type CameraScanScreenProps = NativeStackScreenProps<
   RootStackParamList,
   'CameraScan'
 >;
+
+const ocrAvailable = isOcrSupported;
 
 export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) => {
   const { peopleCount: initialPeopleCount } = route.params ?? {};
@@ -30,6 +33,16 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
   );
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [scanError, setScanError] = useState<string | null>(null);
+
+  const showMessage = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      setScanError(`${title}: ${message}`);
+      return;
+    }
+
+    Alert.alert(title, message);
+  };
 
   const processReceiptImage = async (uri?: string) => {
     if (!uri) {
@@ -38,40 +51,45 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
 
     setImageUri(uri);
     setIsLoading(true);
+    setScanError(null);
 
     try {
-      const normalizedImage = await ImageManipulator.manipulateAsync(
-        uri,
-        [{ resize: { width: 900 } }],
-        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
-      );
+      const sourceUri =
+        Platform.OS === 'web'
+          ? uri
+          : (
+              await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: 900 } }],
+                { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
+              )
+            ).uri;
 
-      const result = await recognizeText(normalizedImage.uri);
-      const rawLines = result.blocks
-        .map((block) => block.text)
-        .filter(Boolean);
+      const rawLines = await recognizeTextLines(sourceUri);
 
       if (!rawLines.length) {
-        Alert.alert(
+        showMessage(
           'No text found',
-          'The image was imported, but no text could be detected yet.'
+          'The image loaded, but OCR could not detect readable text.'
         );
         return;
       }
 
-      const parsedItems = parseReceiptLines(rawLines) as ReceiptItem[];
+      const { items, summary } = parseReceiptDetails(rawLines) as {
+        items: ReceiptItem[];
+        summary: ReceiptSummary;
+      };
+      const parsedItems = items;
 
       if (!parsedItems.length) {
-        Alert.alert(
-          'No items found',
-          'We could not extract any item lines from this receipt yet.'
-        );
+        const totalText = summary.total ? ` Detected total: $${summary.total.toFixed(2)}.` : '';
+        showMessage('No items found', `Could not extract item rows with prices.${totalText}`);
         return;
       }
 
       const parsedPeopleCount = Number(peopleCountInput);
       if (!Number.isFinite(parsedPeopleCount) || parsedPeopleCount < 1) {
-        Alert.alert(
+        showMessage(
           'Invalid people count',
           'Please enter at least 1 person before continuing.'
         );
@@ -81,12 +99,17 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
       navigation.navigate('ItemClaimBoard', {
         items: parsedItems,
         peopleCount: parsedPeopleCount,
+        receiptSummary: summary,
       });
     } catch (error) {
       console.log('Receipt OCR error:', error);
-      Alert.alert(
+      const reason =
+        error instanceof Error && error.message
+          ? ` Details: ${error.message}`
+          : '';
+      showMessage(
         'Scan failed',
-        'Receipt scanning needs a native build to work correctly. If you are using Expo Go, please rebuild the app and try again.'
+        `We could not read this receipt right now. Please try another image.${reason}`
       );
     } finally {
       setIsLoading(false);
@@ -94,14 +117,16 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
   };
 
   const handleTakePhoto = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    if (Platform.OS !== 'web') {
+      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
-    if (!permissionResult.granted) {
-      Alert.alert(
-        'Camera permission needed',
-        'Please allow camera access to scan receipts.'
-      );
-      return;
+      if (!permissionResult.granted) {
+        showMessage(
+          'Camera permission needed',
+          'Please allow camera access to scan receipts.'
+        );
+        return;
+      }
     }
 
     const result = await ImagePicker.launchCameraAsync({
@@ -117,14 +142,16 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
   };
 
   const handlePickFromLibrary = async () => {
-    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (Platform.OS !== 'web') {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
 
-    if (!permissionResult.granted) {
-      Alert.alert(
-        'Photo library permission needed',
-        'Please allow access to your photos to import a receipt.'
-      );
-      return;
+      if (!permissionResult.granted) {
+        showMessage(
+          'Photo library permission needed',
+          'Please allow access to your photos to import a receipt.'
+        );
+        return;
+      }
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -140,6 +167,11 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
   };
 
   const handleClearImage = () => {
+    if (Platform.OS === 'web') {
+      setImageUri(null);
+      return;
+    }
+
     Alert.alert(
       'Remove image?',
       'This will clear the current receipt preview.',
@@ -189,6 +221,21 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
         </View>
       )}
 
+      {!ocrAvailable && (
+        <View style={styles.ocrBanner}>
+          <Text style={styles.ocrBannerText}>
+            Receipt scanning requires a development build — it is not available in Expo Go.
+            Use the manual entry on the home screen instead.
+          </Text>
+        </View>
+      )}
+
+      {scanError ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{scanError}</Text>
+        </View>
+      ) : null}
+
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#ffc0cb" />
@@ -196,12 +243,17 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
         </View>
       ) : (
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.button} onPress={handleTakePhoto}>
+          <TouchableOpacity
+            style={[styles.button, !ocrAvailable && styles.buttonDisabled]}
+            onPress={handleTakePhoto}
+            disabled={!ocrAvailable}
+          >
             <Text style={styles.buttonText}>Take Photo</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
+            style={[styles.button, styles.secondaryButton, !ocrAvailable && styles.buttonDisabled]}
             onPress={handlePickFromLibrary}
+            disabled={!ocrAvailable}
           >
             <Text style={styles.buttonText}>Import Receipt</Text>
           </TouchableOpacity>
@@ -281,9 +333,40 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: '#7e3f12',
   },
+  buttonDisabled: {
+    opacity: 0.4,
+  },
   buttonText: {
     color: '#000000',
     fontSize: 16,
     fontWeight: '700',
+  },
+  ocrBanner: {
+    width: '100%',
+    backgroundColor: '#FFF3CD',
+    borderColor: '#FBBF24',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  ocrBannerText: {
+    color: '#92400E',
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  errorBanner: {
+    width: '100%',
+    backgroundColor: '#FEE2E2',
+    borderColor: '#EF4444',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorBannerText: {
+    color: '#7F1D1D',
+    fontSize: 14,
+    lineHeight: 20,
   },
 });
