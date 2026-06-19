@@ -83,7 +83,19 @@ export const HomeScreen = ({ navigation }: HomeScreenProps) => {
 
         <TouchableOpacity
           style={[styles.button, styles.secondaryButton]}
-          onPress={() => navigation.navigate('CameraScan')}
+          onPress={() => {
+            const parsedPeople = Number(people);
+
+            if (!Number.isFinite(parsedPeople) || parsedPeople < 1) {
+              Alert.alert(
+                'Invalid people count',
+                'Please enter at least 1 person before scanning.'
+              );
+              return;
+            }
+
+            navigation.navigate('CameraScan', { peopleCount: parsedPeople });
+          }}
         >
           <Text style={styles.buttonText}>Scan Receipt</Text>
         </TouchableOpacity>
