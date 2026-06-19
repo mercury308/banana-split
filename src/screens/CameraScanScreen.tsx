@@ -121,12 +121,25 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
     await processReceiptImage(result.assets[0].uri);
   };
 
+  const handleClearImage = () => {
+    setImageUri(null);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Scan Receipt</Text>
 
       {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.preview} />
+        <View style={styles.previewContainer}>
+          <Image source={{ uri: imageUri }} style={styles.preview} />
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={handleClearImage}
+            accessibilityLabel="Clear selected image"
+          >
+            <Text style={styles.clearButtonText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>No picture yet</Text>
@@ -168,11 +181,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 16,
   },
+  previewContainer: {
+    width: '100%',
+    marginBottom: 16,
+  },
   preview: {
     width: '100%',
     height: 280,
     borderRadius: 16,
-    marginBottom: 16,
+  },
+  clearButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    backgroundColor: '#7e3f12',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  clearButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   placeholder: {
     width: '100%',
