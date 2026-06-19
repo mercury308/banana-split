@@ -13,7 +13,21 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import { isSupported, recognizeText } from 'expo-mlkit-ocr';
+// expo-mlkit-ocr requires a native/dev build and is not available in Expo Go.
+// Using a safe dynamic require so the app doesn't crash at import time.
+let isSupported: () => boolean = () => false;
+let recognizeText: (uri: string) => Promise<{ blocks: { text: string }[] }> =
+  async () => {
+    throw new Error('Cannot find native module: ExpoMlkitOcr');
+  };
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const mlkit = require('expo-mlkit-ocr');
+  isSupported = mlkit.isSupported;
+  recognizeText = mlkit.recognizeText;
+} catch {
+  // Native module unavailable (e.g., Expo Go) — fallback stubs remain active
+}
 import { ReceiptItem, RootStackParamList } from '../navigation/AppNavigator';
 import { InputField } from '../components/InputField';
 import { parseReceiptLines } from '../utils/receiptParser';
