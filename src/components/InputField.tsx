@@ -7,6 +7,9 @@ interface InputFieldProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   keyboardType?: 'numeric' | 'decimal-pad' | 'number-pad' | 'default';
+  returnKeyType?: 'done' | 'next' | 'go' | 'search' | 'default';
+  blurOnSubmit?: boolean;
+  onSubmitEditing?: () => void;
 }
 
 export const InputField = ({
@@ -15,6 +18,9 @@ export const InputField = ({
   onChangeText,
   placeholder,
   keyboardType = 'default',
+  returnKeyType = 'done',
+  blurOnSubmit = true,
+  onSubmitEditing,
 }: InputFieldProps) => {
   return (
     <View style={styles.container}>
@@ -25,6 +31,9 @@ export const InputField = ({
         onChangeText={onChangeText}
         placeholder={placeholder}
         keyboardType={keyboardType}
+        returnKeyType={returnKeyType}
+        blurOnSubmit={blurOnSubmit}
+        onSubmitEditing={onSubmitEditing}
         autoCapitalize="none"
         autoCorrect={false}
         placeholderTextColor="#9CA3AF"

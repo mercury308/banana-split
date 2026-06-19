@@ -3,6 +3,8 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -11,7 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import TextRecognition from '@react-native-ml-kit/text-recognition';
+import { recognizeText } from 'expo-mlkit-ocr';
 import { ReceiptItem, RootStackParamList } from '../navigation/AppNavigator';
 import { InputField } from '../components/InputField';
 import { parseReceiptLines } from '../utils/receiptParser';
@@ -44,7 +46,7 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
         { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      const result = await TextRecognition.recognize(normalizedImage.uri);
+      const result = await recognizeText(normalizedImage.uri);
       const rawLines = result.blocks
         .map((block) => block.text)
         .filter(Boolean);
@@ -82,7 +84,10 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
       });
     } catch (error) {
       console.log('Receipt OCR error:', error);
-      Alert.alert('Scan failed', 'We could not parse the receipt right now.');
+      Alert.alert(
+        'Scan failed',
+        'Receipt scanning needs a native build to work correctly. If you are using Expo Go, please rebuild the app and try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +155,10 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>Scan Receipt</Text>
 
       <InputField
@@ -159,6 +167,9 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
         onChangeText={setPeopleCountInput}
         placeholder="2"
         keyboardType="numeric"
+        returnKeyType="done"
+        blurOnSubmit={true}
+        onSubmitEditing={() => Keyboard.dismiss()}
       />
 
       {imageUri ? (
@@ -196,7 +207,7 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
