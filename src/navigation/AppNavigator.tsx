@@ -17,8 +17,11 @@ export interface ReceiptItem {
 export type RootStackParamList = {
   Home: undefined;
   Results: { result: SplitResult };
-  CameraScan: undefined;
-  ItemClaimBoard: { items: ReceiptItem[] };
+  CameraScan: { peopleCount: number };
+  ItemClaimBoard: {
+    items: ReceiptItem[];
+    peopleCount: number;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

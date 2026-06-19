@@ -3,18 +3,19 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Keyboard,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import TextRecognition from '@react-native-ml-kit/text-recognition';
-import { Paths } from 'expo-file-system';
+import { recognizeText } from 'expo-mlkit-ocr';
 import { ReceiptItem, RootStackParamList } from '../navigation/AppNavigator';
+import { InputField } from '../components/InputField';
 import { parseReceiptLines } from '../utils/receiptParser';
 
 export type CameraScanScreenProps = NativeStackScreenProps<
@@ -22,7 +23,11 @@ export type CameraScanScreenProps = NativeStackScreenProps<
   'CameraScan'
 >;
 
-export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
+export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) => {
+  const { peopleCount: initialPeopleCount } = route.params ?? {};
+  const [peopleCountInput, setPeopleCountInput] = useState(
+    String(initialPeopleCount ?? '2')
+  );
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,18 +42,11 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
     try {
       const normalizedImage = await ImageManipulator.manipulateAsync(
         uri,
-        [{ resize: { width: 1200 } }],
-        { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
+        [{ resize: { width: 900 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      const fileName = normalizedImage.uri.split('/').pop() || `receipt-${Date.now()}.jpg`;
-      const destination = `${Paths.cache.uri}${fileName}`;
-      await FileSystem.copyAsync({
-        from: normalizedImage.uri,
-        to: destination,
-      });
-
-      const result = await TextRecognition.recognize(destination);
+      const result = await recognizeText(normalizedImage.uri);
       const rawLines = result.blocks
         .map((block) => block.text)
         .filter(Boolean);
@@ -71,10 +69,25 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
         return;
       }
 
-      navigation.navigate('ItemClaimBoard', { items: parsedItems });
+      const parsedPeopleCount = Number(peopleCountInput);
+      if (!Number.isFinite(parsedPeopleCount) || parsedPeopleCount < 1) {
+        Alert.alert(
+          'Invalid people count',
+          'Please enter at least 1 person before continuing.'
+        );
+        return;
+      }
+
+      navigation.navigate('ItemClaimBoard', {
+        items: parsedItems,
+        peopleCount: parsedPeopleCount,
+      });
     } catch (error) {
       console.log('Receipt OCR error:', error);
-      Alert.alert('Scan failed', 'We could not parse the receipt right now.');
+      Alert.alert(
+        'Scan failed',
+        'Receipt scanning needs a native build to work correctly. If you are using Expo Go, please rebuild the app and try again.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -92,8 +105,8 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      quality: 0.8,
+      allowsEditing: false,
+      quality: 0.7,
     });
 
     if (result.canceled || !result.assets?.length) {
@@ -115,8 +128,8 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      quality: 0.8,
+      allowsEditing: false,
+      quality: 0.7,
     });
 
     if (result.canceled || !result.assets?.length) {
@@ -126,12 +139,50 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
     await processReceiptImage(result.assets[0].uri);
   };
 
+  const handleClearImage = () => {
+    Alert.alert(
+      'Remove image?',
+      'This will clear the current receipt preview.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => setImageUri(null),
+        },
+      ]
+    );
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      keyboardShouldPersistTaps="handled"
+    >
       <Text style={styles.title}>Scan Receipt</Text>
 
+      <InputField
+        label="Number of people"
+        value={peopleCountInput}
+        onChangeText={setPeopleCountInput}
+        placeholder="2"
+        keyboardType="numeric"
+        returnKeyType="done"
+        blurOnSubmit={true}
+        onSubmitEditing={() => Keyboard.dismiss()}
+      />
+
       {imageUri ? (
-        <Image source={{ uri: imageUri }} style={styles.preview} />
+        <View style={styles.previewContainer}>
+          <Image source={{ uri: imageUri }} style={styles.preview} />
+          <TouchableOpacity
+            style={styles.clearButton}
+            onPress={handleClearImage}
+            accessibilityLabel="Clear selected image"
+          >
+            <Text style={styles.clearButtonText}>Clear</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <View style={styles.placeholder}>
           <Text style={styles.placeholderText}>No picture yet</Text>
@@ -156,7 +207,7 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
@@ -173,11 +224,27 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 16,
   },
+  previewContainer: {
+    width: '100%',
+    marginBottom: 16,
+  },
   preview: {
     width: '100%',
     height: 280,
     borderRadius: 16,
-    marginBottom: 16,
+  },
+  clearButton: {
+    alignSelf: 'flex-end',
+    marginTop: 8,
+    backgroundColor: '#7e3f12',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  clearButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   placeholder: {
     width: '100%',

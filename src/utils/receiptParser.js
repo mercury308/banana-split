@@ -1,25 +1,35 @@
 export const parseReceiptLines = (rawLines = []) => {
   const ignoredPatterns = /^(subtotal|tax|total|tip|change|cash|card|balance|thank you|receipt|gratuity|service charge|discount)$/i;
+  const pricePattern = /\$?\d{1,3}(?:[.,]\d{1,2})?/;
 
   const parsedItems = rawLines
     .map((line) => String(line ?? '').replace(/\s+/g, ' ').trim())
     .filter(Boolean)
     .map((line) => {
-      const priceMatch = line.match(/\$?\s*(\d+\.\d{2})/);
+      const normalizedLine = line.replace(/\$\s*/g, '$');
+      const endPriceMatch = normalizedLine.match(
+        /^(.*?)(?:\s+|)(\$?\d{1,3}(?:[.,]\d{1,2})?)\s*$/
+      );
+      const startPriceMatch = normalizedLine.match(
+        /^(\$?\d{1,3}(?:[.,]\d{1,2})?)\s+(.*)$/
+      );
+      const priceMatch =
+        (endPriceMatch && endPriceMatch[2]) ||
+        (startPriceMatch && startPriceMatch[1]) ||
+        normalizedLine.match(pricePattern)?.[0];
+
       if (!priceMatch) {
         return null;
       }
 
-      const price = Number(priceMatch[1]);
+      const price = Number(
+        priceMatch.replace(/,/g, '.').replace(/\$/g, '')
+      );
       if (!Number.isFinite(price) || price <= 0) {
         return null;
       }
 
-      const priceToken = priceMatch[0].replace(/[^\d.]/g, '');
-      const normalizedLine = line.replace(/\$\s*/g, '$');
-
-      const endPriceMatch = normalizedLine.match(/^(.*?)(?:\s+|)(\$?\d+\.\d{2})\s*$/);
-      const startPriceMatch = normalizedLine.match(/^(\$?\d+\.\d{2})\s+(.*)$/);
+      const priceToken = priceMatch.replace(/[^\d.,]/g, '');
       const nameCandidate =
         (endPriceMatch && endPriceMatch[1]?.trim()) ||
         (startPriceMatch && startPriceMatch[2]?.trim()) ||
