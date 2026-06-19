@@ -9,11 +9,9 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import * as FileSystem from 'expo-file-system';
 import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
-import { Paths } from 'expo-file-system';
 import { ReceiptItem, RootStackParamList } from '../navigation/AppNavigator';
 import { parseReceiptLines } from '../utils/receiptParser';
 
@@ -22,7 +20,8 @@ export type CameraScanScreenProps = NativeStackScreenProps<
   'CameraScan'
 >;
 
-export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
+export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) => {
+  const { peopleCount } = route.params;
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -37,18 +36,11 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
     try {
       const normalizedImage = await ImageManipulator.manipulateAsync(
         uri,
-        [{ resize: { width: 1200 } }],
-        { compress: 0.9, format: ImageManipulator.SaveFormat.JPEG }
+        [{ resize: { width: 900 } }],
+        { compress: 0.85, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      const fileName = normalizedImage.uri.split('/').pop() || `receipt-${Date.now()}.jpg`;
-      const destination = `${Paths.cache.uri}${fileName}`;
-      await FileSystem.copyAsync({
-        from: normalizedImage.uri,
-        to: destination,
-      });
-
-      const result = await TextRecognition.recognize(destination);
+      const result = await TextRecognition.recognize(normalizedImage.uri);
       const rawLines = result.blocks
         .map((block) => block.text)
         .filter(Boolean);
@@ -71,7 +63,10 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
         return;
       }
 
-      navigation.navigate('ItemClaimBoard', { items: parsedItems });
+      navigation.navigate('ItemClaimBoard', {
+        items: parsedItems,
+        peopleCount,
+      });
     } catch (error) {
       console.log('Receipt OCR error:', error);
       Alert.alert('Scan failed', 'We could not parse the receipt right now.');
@@ -92,8 +87,8 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
     }
 
     const result = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      quality: 0.8,
+      allowsEditing: false,
+      quality: 0.7,
     });
 
     if (result.canceled || !result.assets?.length) {
@@ -115,8 +110,8 @@ export const CameraScanScreen = ({ navigation }: CameraScanScreenProps) => {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      quality: 0.8,
+      allowsEditing: false,
+      quality: 0.7,
     });
 
     if (result.canceled || !result.assets?.length) {
