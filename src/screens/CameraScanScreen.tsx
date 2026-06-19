@@ -13,6 +13,7 @@ import * as ImageManipulator from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import TextRecognition from '@react-native-ml-kit/text-recognition';
 import { ReceiptItem, RootStackParamList } from '../navigation/AppNavigator';
+import { InputField } from '../components/InputField';
 import { parseReceiptLines } from '../utils/receiptParser';
 
 export type CameraScanScreenProps = NativeStackScreenProps<
@@ -21,7 +22,10 @@ export type CameraScanScreenProps = NativeStackScreenProps<
 >;
 
 export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) => {
-  const { peopleCount } = route.params;
+  const { peopleCount: initialPeopleCount } = route.params ?? {};
+  const [peopleCountInput, setPeopleCountInput] = useState(
+    String(initialPeopleCount ?? '2')
+  );
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,9 +67,18 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
         return;
       }
 
+      const parsedPeopleCount = Number(peopleCountInput);
+      if (!Number.isFinite(parsedPeopleCount) || parsedPeopleCount < 1) {
+        Alert.alert(
+          'Invalid people count',
+          'Please enter at least 1 person before continuing.'
+        );
+        return;
+      }
+
       navigation.navigate('ItemClaimBoard', {
         items: parsedItems,
-        peopleCount,
+        peopleCount: parsedPeopleCount,
       });
     } catch (error) {
       console.log('Receipt OCR error:', error);
@@ -139,6 +152,14 @@ export const CameraScanScreen = ({ navigation, route }: CameraScanScreenProps) =
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Scan Receipt</Text>
+
+      <InputField
+        label="Number of people"
+        value={peopleCountInput}
+        onChangeText={setPeopleCountInput}
+        placeholder="2"
+        keyboardType="numeric"
+      />
 
       {imageUri ? (
         <View style={styles.previewContainer}>
